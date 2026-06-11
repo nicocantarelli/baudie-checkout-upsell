@@ -1,3 +1,6 @@
+export const UPSELL_NAMESPACE = 'custom';
+export const UPSELL_KEY = 'upsell_price';
+
 const COMING_SOON_TAGS = ['coming-soon', 'Coming soon', 'coming soon', 'Coming Soon'];
 
 // Parses the upsell_price metafield value. Mirrors the deal-price rule in

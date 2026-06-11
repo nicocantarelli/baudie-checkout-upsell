@@ -6,6 +6,8 @@ import {
   hasQualifier,
   isOfferEligible,
   parseUpsellPrice,
+  UPSELL_NAMESPACE,
+  UPSELL_KEY,
 } from './lib/upsell.js';
 import { OFFER_QUERY, mapVariantNode } from './lib/offers.js';
 
@@ -18,8 +20,8 @@ function findProductUpsellPrice(appMetafields, productId) {
     (candidate) =>
       candidate.target.type === 'product' &&
       candidate.target.id === productId &&
-      candidate.metafield.namespace === 'custom' &&
-      candidate.metafield.key === 'upsell_price',
+      candidate.metafield.namespace === UPSELL_NAMESPACE &&
+      candidate.metafield.key === UPSELL_KEY,
   );
   return parseUpsellPrice(entry?.metafield);
 }
@@ -54,7 +56,7 @@ function Extension() {
     async function fetchOffers() {
       try {
         const { data, errors } = await shopify.query(OFFER_QUERY, {
-          variables: { ids: offerIdsKey.split(',') },
+          variables: { ids: offerVariantIds },
         });
         if (!active) return;
         if (errors?.length || !Array.isArray(data?.nodes)) {
@@ -80,7 +82,10 @@ function Extension() {
     upsellPrice: findProductUpsellPrice(appMetafields, line.merchandise.product.id),
   }));
   // No qualifier in cart means the upsell discount wouldn't apply, so the
-  // offer price would be misleading — render nothing.
+  // offer price would be misleading — render nothing. Note: appMetafields load
+  // async with no loaded-flag, so an upsell-only cart can transiently pass
+  // this gate; the offer fetch round-trip usually outlasts that window, and
+  // there is no API to distinguish loaded-empty from not-yet-loaded.
   if (!hasQualifier(cartProducts)) return null;
 
   const cartProductIds = cartProducts.map((product) => product.productId);
@@ -132,7 +137,7 @@ function OfferCard({ offer, loading, disabled, onAdd }) {
       {offer.imageUrl && (
         <s-image
           src={offer.imageUrl}
-          alt={offer.title}
+          alt=""
           aspectRatio="1"
           inlineSize="fill"
           objectFit="cover"
@@ -142,15 +147,26 @@ function OfferCard({ offer, loading, disabled, onAdd }) {
       <s-stack gap="small-300">
         <s-text>{offer.title}</s-text>
         <s-stack direction="inline" gap="small-300">
+          {compareAtCents != null && (
+            <s-text accessibilityVisibility="exclusive">{shopify.i18n.translate('salePrice')}</s-text>
+          )}
           <s-text type="strong">{formatMoney(currentCents, offer.currencyCode)}</s-text>
           {compareAtCents != null && (
-            <s-text type="redundant" color="subdued">
-              {formatMoney(compareAtCents, offer.currencyCode)}
-            </s-text>
+            <>
+              <s-text accessibilityVisibility="exclusive">{shopify.i18n.translate('regularPrice')}</s-text>
+              <s-text type="redundant" color="subdued">
+                {formatMoney(compareAtCents, offer.currencyCode)}
+              </s-text>
+            </>
           )}
         </s-stack>
       </s-stack>
-      <s-button onClick={onAdd} loading={loading} disabled={disabled}>
+      <s-button
+        onClick={onAdd}
+        loading={loading}
+        disabled={disabled}
+        accessibilityLabel={shopify.i18n.translate('addButtonLabel', { title: offer.title })}
+      >
         {shopify.i18n.translate('addButton')}
       </s-button>
     </s-grid>

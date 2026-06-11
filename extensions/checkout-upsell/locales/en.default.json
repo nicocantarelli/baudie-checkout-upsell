@@ -1,4 +1,7 @@
 {
   "addButton": "Add",
-  "addError": "Couldn't add this item. Please try again."
+  "addButtonLabel": "Add {{title}} to your order",
+  "addError": "Couldn't add this item. Please try again.",
+  "regularPrice": "Regular price",
+  "salePrice": "Sale price"
 }

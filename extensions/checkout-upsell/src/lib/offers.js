@@ -1,4 +1,4 @@
-import { isComingSoon, parseUpsellPrice } from './upsell.js';
+import { isComingSoon, parseUpsellPrice, UPSELL_NAMESPACE, UPSELL_KEY } from './upsell.js';
 
 // Storefront API query: fetch offer variants by id with the fields the card needs.
 export const OFFER_QUERY = `
@@ -13,7 +13,7 @@ export const OFFER_QUERY = `
           id
           title
           tags
-          metafield(namespace: "custom", key: "upsell_price") { value }
+          metafield(namespace: "${UPSELL_NAMESPACE}", key: "${UPSELL_KEY}") { value }
         }
       }
     }
