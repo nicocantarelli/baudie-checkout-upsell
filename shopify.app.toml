@@ -11,7 +11,8 @@ automatically_update_urls_on_dev = true
 api_version = "2026-07"
 
 [access_scopes]
-# read_products: allow the extension to read product data in checkout
+# read_products: kept for parity with baudie-discounts and potential future Admin API needs.
+# Checkout UI extensions read product data via the Storefront API (api_access capability), not Admin scopes.
 scopes = "read_products"
 
 [auth]
