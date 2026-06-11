@@ -117,8 +117,9 @@ function Extension() {
     }
   }
 
-  const offerList = (
+  return (
     <s-stack gap="base">
+      {heading && <s-heading>{heading}</s-heading>}
       {addFailed && (
         <s-banner tone="critical">
           {shopify.i18n.translate("addError")}
@@ -137,11 +138,6 @@ function Extension() {
       ))}
     </s-stack>
   );
-
-  if (!heading) return offerList;
-  // s-section renders its heading at the checkout's section-heading scale,
-  // larger than a bare s-heading nested in the block.
-  return <s-section heading={heading}>{offerList}</s-section>;
 }
 
 function OfferCard({ offer, loading, disabled, onAdd }) {
