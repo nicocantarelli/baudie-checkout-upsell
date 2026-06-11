@@ -67,6 +67,10 @@ describe('computePriceDisplay', () => {
     expect(computePriceDisplay({ variantPriceCents: 2400, upsellPrice: null }))
       .toEqual({ currentCents: 2400, compareAtCents: null });
   });
+  it('clamps to variant price when upsell price is misconfigured higher', () => {
+    expect(computePriceDisplay({ variantPriceCents: 1900, upsellPrice: 24 }))
+      .toEqual({ currentCents: 1900, compareAtCents: null });
+  });
 });
 
 describe('isOfferEligible', () => {

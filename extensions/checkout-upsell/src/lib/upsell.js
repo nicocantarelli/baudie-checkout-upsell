@@ -25,11 +25,14 @@ export function isComingSoon(tags) {
 
 // Mirrors snippets/sidecart-upsell-item.liquid: upsell_price (dollars) is the
 // shown price; the regular variant price is struck through only when higher.
+// Clamps currentCents to variantPriceCents: the discount only applies when
+// upsell_price < variant price, so a misconfigured higher value would never
+// reduce the charge — capping ensures the display matches what the buyer pays.
 export function computePriceDisplay({ variantPriceCents, upsellPrice }) {
   if (upsellPrice == null) {
     return { currentCents: variantPriceCents, compareAtCents: null };
   }
-  const currentCents = Math.round(upsellPrice * 100);
+  const currentCents = Math.min(Math.round(upsellPrice * 100), variantPriceCents);
   const compareAtCents = currentCents < variantPriceCents ? variantPriceCents : null;
   return { currentCents, compareAtCents };
 }
