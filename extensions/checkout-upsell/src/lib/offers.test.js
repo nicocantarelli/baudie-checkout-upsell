@@ -5,7 +5,7 @@ describe('OFFER_QUERY', () => {
   it('requests the fields the card needs', () => {
     expect(OFFER_QUERY).toContain('availableForSale');
     expect(OFFER_QUERY).toContain('price { amount currencyCode }');
-    expect(OFFER_QUERY).toContain('image { url }');
+    expect(OFFER_QUERY).toContain('image { url(transform: { maxWidth: 192, maxHeight: 192 }) }');
     expect(OFFER_QUERY).toContain('tags');
     expect(OFFER_QUERY).toContain('metafield(namespace: "custom", key: "upsell_price")');
   });

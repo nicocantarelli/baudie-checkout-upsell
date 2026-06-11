@@ -8,7 +8,7 @@ export const OFFER_QUERY = `
         id
         availableForSale
         price { amount currencyCode }
-        image { url }
+        image { url(transform: { maxWidth: 192, maxHeight: 192 }) }
         product {
           id
           title
