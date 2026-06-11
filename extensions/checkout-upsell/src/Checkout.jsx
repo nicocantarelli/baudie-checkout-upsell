@@ -142,20 +142,26 @@ function Extension() {
 
 function OfferCard({ offer, loading, disabled, onAdd }) {
   const { currentCents, compareAtCents } = computePriceDisplay(offer);
-  const columns = offer.imageUrl ? "6rem 1fr auto" : "1fr auto";
+  const columns = offer.imageUrl ? "4rem 1fr auto" : "1fr auto";
 
   return (
     <s-box background="subdued" padding="base" borderRadius="base">
       <s-grid gridTemplateColumns={columns} gap="base" alignItems="center">
         {offer.imageUrl && (
-          <s-image
-            src={offer.imageUrl}
-            alt=""
-            aspectRatio="1"
-            inlineSize="fill"
-            objectFit="cover"
+          <s-box
+            background="base"
+            border="base"
             borderRadius="base"
-          />
+            overflow="hidden"
+          >
+            <s-image
+              src={offer.imageUrl}
+              alt=""
+              aspectRatio="1"
+              inlineSize="fill"
+              objectFit="contain"
+            />
+          </s-box>
         )}
         <s-stack gap="small-300">
           <s-text>{offer.title}</s-text>
