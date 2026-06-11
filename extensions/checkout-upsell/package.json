@@ -1,0 +1,17 @@
+{
+  "name": "checkout-upsell",
+  "private": true,
+  "version": "1.0.0",
+  "license": "UNLICENSED",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@preact/signals": "^2.3.x",
+    "@shopify/ui-extensions": "2026.4.x",
+    "preact": "^10.10.x"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.8"
+  }
+}
