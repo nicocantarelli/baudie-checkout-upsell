@@ -162,6 +162,7 @@ function OfferCard({ offer, loading, disabled, onAdd }) {
         </s-stack>
       </s-stack>
       <s-button
+        variant="primary"
         onClick={onAdd}
         loading={loading}
         disabled={disabled}
