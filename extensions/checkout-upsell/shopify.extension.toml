@@ -8,6 +8,7 @@ api_version = "2026-04"
 [[extensions]]
 name = "checkout-upsell"
 handle = "checkout-upsell"
+uid = "42a78221-416b-44aa-07ba-7ad811835d0691422ded"
 type = "ui_extension"
 
 # Controls where in Shopify your extension will be injected,
