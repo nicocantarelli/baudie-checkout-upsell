@@ -4,7 +4,29 @@ import {
   isComingSoon,
   computePriceDisplay,
   isOfferEligible,
+  parseUpsellPrice,
 } from './upsell.js';
+
+describe('parseUpsellPrice', () => {
+  it('returns null for null metafield', () => {
+    expect(parseUpsellPrice(null)).toBe(null);
+  });
+  it('returns null for blank value', () => {
+    expect(parseUpsellPrice({ value: '' })).toBe(null);
+  });
+  it('returns null for zero', () => {
+    expect(parseUpsellPrice({ value: '0' })).toBe(null);
+  });
+  it('returns null for negative value', () => {
+    expect(parseUpsellPrice({ value: '-5' })).toBe(null);
+  });
+  it('returns null for non-numeric value', () => {
+    expect(parseUpsellPrice({ value: 'abc' })).toBe(null);
+  });
+  it('returns the parsed number for a valid price', () => {
+    expect(parseUpsellPrice({ value: '19.0' })).toBe(19);
+  });
+});
 
 describe('hasQualifier', () => {
   it('true when a cart product has no upsell price', () => {
@@ -15,6 +37,9 @@ describe('hasQualifier', () => {
   });
   it('false for an empty cart', () => {
     expect(hasQualifier([])).toBe(false);
+  });
+  it('true when an entry is undefined (unknown product = not an upsell product)', () => {
+    expect(hasQualifier([undefined])).toBe(true);
   });
 });
 

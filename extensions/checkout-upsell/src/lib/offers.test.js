@@ -3,9 +3,11 @@ import { OFFER_QUERY, mapVariantNode } from './offers.js';
 
 describe('OFFER_QUERY', () => {
   it('requests the fields the card needs', () => {
-    for (const field of ['price', 'availableForSale', 'image', 'metafield', 'tags']) {
-      expect(OFFER_QUERY).toContain(field);
-    }
+    expect(OFFER_QUERY).toContain('availableForSale');
+    expect(OFFER_QUERY).toContain('price { amount currencyCode }');
+    expect(OFFER_QUERY).toContain('image { url }');
+    expect(OFFER_QUERY).toContain('tags');
+    expect(OFFER_QUERY).toContain('metafield(namespace: "custom", key: "upsell_price")');
   });
 });
 
@@ -31,6 +33,7 @@ describe('mapVariantNode', () => {
       comingSoon: false,
       imageUrl: 'https://cdn/x.png',
       variantPriceCents: 2400,
+      currencyCode: 'USD',
       upsellPrice: 19,
     });
   });
@@ -53,7 +56,11 @@ describe('mapVariantNode', () => {
       comingSoon: true,
       imageUrl: null,
       variantPriceCents: 800,
+      currencyCode: 'USD',
       upsellPrice: null,
     });
+  });
+  it('returns null for an empty object (non-variant node shape)', () => {
+    expect(mapVariantNode({})).toBe(null);
   });
 });

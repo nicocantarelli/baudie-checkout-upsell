@@ -1,9 +1,19 @@
 const COMING_SOON_TAGS = ['coming-soon', 'Coming soon', 'coming soon', 'Coming Soon'];
 
+// Parses the upsell_price metafield value. Mirrors the deal-price rule in
+// baudie-discounts and MUST stay in sync: missing/blank/non-numeric/zero/negative
+// → null. null means "not an upsell product" (= qualifier for the discount).
+export function parseUpsellPrice(metafield) {
+  if (!metafield || metafield.value == null || metafield.value === '') return null;
+  const v = parseFloat(metafield.value);
+  return v > 0 ? v : null;
+}
+
 // A "qualifier" is any cart product without an upsell price — the discount
 // function only applies its deal when the cart holds at least one of these.
+// Sparse/undefined entries count as qualifiers (unknown product = not upsell).
 export function hasQualifier(cartProducts) {
-  return cartProducts.some((p) => p.upsellPrice == null);
+  return cartProducts.some((p) => p?.upsellPrice == null);
 }
 
 export function isComingSoon(tags) {
