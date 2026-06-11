@@ -1,6 +1,6 @@
-import '@shopify/ui-extensions/preact';
-import { render } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import "@shopify/ui-extensions/preact";
+import { render } from "preact";
+import { useEffect, useState } from "preact/hooks";
 import {
   computePriceDisplay,
   hasQualifier,
@@ -8,8 +8,8 @@ import {
   parseUpsellPrice,
   UPSELL_NAMESPACE,
   UPSELL_KEY,
-} from './lib/upsell.js';
-import { OFFER_QUERY, mapVariantNode } from './lib/offers.js';
+} from "./lib/upsell.js";
+import { OFFER_QUERY, mapVariantNode } from "./lib/offers.js";
 
 export default async () => {
   render(<Extension />, document.body);
@@ -18,7 +18,7 @@ export default async () => {
 function findProductUpsellPrice(appMetafields, productId) {
   const entry = appMetafields.find(
     (candidate) =>
-      candidate.target.type === 'product' &&
+      candidate.target.type === "product" &&
       candidate.target.id === productId &&
       candidate.metafield.namespace === UPSELL_NAMESPACE &&
       candidate.metafield.key === UPSELL_KEY,
@@ -37,9 +37,12 @@ function Extension() {
 
   const enabled = settings.enabled !== false;
   const heading = settings.heading;
-  const offerVariantIds = [settings.offer_variant_1, settings.offer_variant_2].filter(Boolean);
-  const offerIdsKey = offerVariantIds.join(',');
-  const shouldFetchOffers = enabled && offerIdsKey !== '';
+  const offerVariantIds = [
+    settings.offer_variant_1,
+    settings.offer_variant_2,
+  ].filter(Boolean);
+  const offerIdsKey = offerVariantIds.join(",");
+  const shouldFetchOffers = enabled && offerIdsKey !== "";
 
   const [offers, setOffers] = useState([]);
   const [pendingVariantId, setPendingVariantId] = useState(null);
@@ -79,7 +82,10 @@ function Extension() {
 
   const cartProducts = lines.map((line) => ({
     productId: line.merchandise.product.id,
-    upsellPrice: findProductUpsellPrice(appMetafields, line.merchandise.product.id),
+    upsellPrice: findProductUpsellPrice(
+      appMetafields,
+      line.merchandise.product.id,
+    ),
   }));
   // No qualifier in cart means the upsell discount wouldn't apply, so the
   // offer price would be misleading — render nothing. Note: appMetafields load
@@ -89,7 +95,9 @@ function Extension() {
   if (!hasQualifier(cartProducts)) return null;
 
   const cartProductIds = cartProducts.map((product) => product.productId);
-  const eligibleOffers = offers.filter((offer) => isOfferEligible(offer, cartProductIds));
+  const eligibleOffers = offers.filter((offer) =>
+    isOfferEligible(offer, cartProductIds),
+  );
   if (eligibleOffers.length === 0) return null;
 
   async function addOffer(offer) {
@@ -97,11 +105,11 @@ function Extension() {
     setPendingVariantId(offer.variantId);
     try {
       const result = await shopify.applyCartLinesChange({
-        type: 'addCartLine',
+        type: "addCartLine",
         merchandiseId: offer.variantId,
         quantity: 1,
       });
-      if (result.type === 'error') setAddFailed(true);
+      if (result.type === "error") setAddFailed(true);
     } catch {
       setAddFailed(true);
     } finally {
@@ -113,14 +121,18 @@ function Extension() {
     <s-stack gap="base">
       {heading && <s-heading>{heading}</s-heading>}
       {addFailed && (
-        <s-banner tone="critical">{shopify.i18n.translate('addError')}</s-banner>
+        <s-banner tone="critical">
+          {shopify.i18n.translate("addError")}
+        </s-banner>
       )}
       {eligibleOffers.map((offer) => (
         <OfferCard
           key={offer.variantId}
           offer={offer}
           loading={pendingVariantId === offer.variantId}
-          disabled={pendingVariantId != null && pendingVariantId !== offer.variantId}
+          disabled={
+            pendingVariantId != null && pendingVariantId !== offer.variantId
+          }
           onAdd={() => addOffer(offer)}
         />
       ))}
@@ -130,46 +142,56 @@ function Extension() {
 
 function OfferCard({ offer, loading, disabled, onAdd }) {
   const { currentCents, compareAtCents } = computePriceDisplay(offer);
-  const columns = offer.imageUrl ? '4rem 1fr auto' : '1fr auto';
+  const columns = offer.imageUrl ? "4rem 1fr auto" : "1fr auto";
 
   return (
-    <s-grid gridTemplateColumns={columns} gap="base" alignItems="center">
-      {offer.imageUrl && (
-        <s-image
-          src={offer.imageUrl}
-          alt=""
-          aspectRatio="1"
-          inlineSize="fill"
-          objectFit="cover"
-          borderRadius="base"
-        />
-      )}
-      <s-stack gap="small-300">
-        <s-text>{offer.title}</s-text>
-        <s-stack direction="inline" gap="small-300">
-          {compareAtCents != null && (
-            <s-text accessibilityVisibility="exclusive">{shopify.i18n.translate('salePrice')}</s-text>
-          )}
-          <s-text type="strong">{formatMoney(currentCents, offer.currencyCode)}</s-text>
-          {compareAtCents != null && (
-            <>
-              <s-text accessibilityVisibility="exclusive">{shopify.i18n.translate('regularPrice')}</s-text>
-              <s-text type="redundant" color="subdued">
-                {formatMoney(compareAtCents, offer.currencyCode)}
+    <s-box background="subdued" padding="base" borderRadius="base">
+      <s-grid gridTemplateColumns={columns} gap="base" alignItems="center">
+        {offer.imageUrl && (
+          <s-image
+            src={offer.imageUrl}
+            alt=""
+            aspectRatio="1"
+            inlineSize="fill"
+            objectFit="cover"
+            borderRadius="base"
+          />
+        )}
+        <s-stack gap="small-300">
+          <s-text>{offer.title}</s-text>
+          <s-stack direction="inline" gap="small-300">
+            {compareAtCents != null && (
+              <s-text accessibilityVisibility="exclusive">
+                {shopify.i18n.translate("salePrice")}
               </s-text>
-            </>
-          )}
+            )}
+            <s-text type="strong">
+              {formatMoney(currentCents, offer.currencyCode)}
+            </s-text>
+            {compareAtCents != null && (
+              <>
+                <s-text accessibilityVisibility="exclusive">
+                  {shopify.i18n.translate("regularPrice")}
+                </s-text>
+                <s-text type="redundant" color="subdued">
+                  {formatMoney(compareAtCents, offer.currencyCode)}
+                </s-text>
+              </>
+            )}
+          </s-stack>
         </s-stack>
-      </s-stack>
-      <s-button
-        variant="primary"
-        onClick={onAdd}
-        loading={loading}
-        disabled={disabled}
-        accessibilityLabel={shopify.i18n.translate('addButtonLabel', { title: offer.title })}
-      >
-        {shopify.i18n.translate('addButton')}
-      </s-button>
-    </s-grid>
+        <s-button
+          variant="primary"
+          onClick={onAdd}
+          loading={loading}
+          disabled={disabled}
+          accessibilityLabel={shopify.i18n.translate("addButtonLabel", {
+            title: offer.title,
+          })}
+        >
+          {shopify.i18n.translate("addButton")}
+        </s-button>
+      </s-grid>
+    </s-box>
   );
 }
