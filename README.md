@@ -1,6 +1,6 @@
 # Baudie Checkout Upsell — Shopify Checkout UI Extension
 
-Checkout UI extension that renders upsell offer cards inside Shopify checkout for the **Baudie** storefront. Extension-only app (no server) built with Shopify's checkout extensibility stack.
+Checkout UI extension that renders upsell offer cards inside Shopify checkout for the **Baudie** storefront ([baudie.com](https://baudie.com)). Extension-only app (no server) built with Shopify's checkout extensibility stack.
 
 Works as one half of a two-app system with [baudie-discounts](https://github.com/nicocantarelli/baudie-discounts): this extension *shows* the deal in checkout, the discount function *enforces* it server-side.
 
