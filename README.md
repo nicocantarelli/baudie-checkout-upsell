@@ -4,7 +4,7 @@ Checkout UI extension that renders upsell offer cards inside Shopify checkout fo
 
 Works as one half of a two-app system with [baudie-discounts](https://github.com/nicocantarelli/baudie-discounts): this extension *shows* the deal in checkout, the discount function *enforces* it server-side.
 
-Designed and built by Nicolas Cantarelli for Lumios Digital.
+Designed and built by Nicolas Cantarelli.
 
 ## How it works
 
