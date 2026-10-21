@@ -4,6 +4,7 @@ import { useEffect, useState } from "preact/hooks";
 import {
   computePriceDisplay,
   hasQualifier,
+  isGiftLine,
   isOfferEligible,
   parseUpsellPrice,
   UPSELL_NAMESPACE,
@@ -77,7 +78,7 @@ function Extension() {
 
   if (!enabled) return null;
 
-  const cartProducts = lines.map((line) => ({
+  const cartProducts = lines.filter((line) => !isGiftLine(line)).map((line) => ({
     productId: line.merchandise.product.id,
     upsellPrice: findProductUpsellPrice(
       appMetafields,

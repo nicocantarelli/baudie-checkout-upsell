@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   hasQualifier,
+  isGiftLine,
   isComingSoon,
   computePriceDisplay,
   isOfferEligible,
@@ -86,5 +87,19 @@ describe('isOfferEligible', () => {
   });
   it('not eligible when coming soon', () => {
     expect(isOfferEligible({ ...offer, comingSoon: true }, [])).toBe(false);
+  });
+});
+
+describe('isGiftLine', () => {
+  it('is true for a line the theme added as a free gift', () => {
+    expect(isGiftLine({ attributes: [{ key: '_gift', value: 'vip:VIPWIPE' }] })).toBe(true);
+    expect(isGiftLine({ attributes: [{ key: '_gift', value: 'tier:1' }] })).toBe(true);
+  });
+
+  it('is false for a regular line', () => {
+    expect(isGiftLine({ attributes: [] })).toBe(false);
+    expect(isGiftLine({ attributes: [{ key: '_note', value: 'x' }] })).toBe(false);
+    expect(isGiftLine({ attributes: [{ key: '_gift', value: '' }] })).toBe(false);
+    expect(isGiftLine({})).toBe(false);
   });
 });

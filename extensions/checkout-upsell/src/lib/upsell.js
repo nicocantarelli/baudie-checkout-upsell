@@ -19,6 +19,14 @@ export function hasQualifier(cartProducts) {
   return cartProducts.some((p) => p?.upsellPrice == null);
 }
 
+// A free gift the theme added (a `_gift` line attribute). Gifts never count as
+// the regular product the deal needs, and never make an offer "already in the
+// cart": the customer didn't pick them. Mirrors baudie-discounts and the
+// theme's cart drawer.
+export function isGiftLine(line) {
+  return (line?.attributes || []).some((attribute) => attribute.key === '_gift' && attribute.value);
+}
+
 export function isComingSoon(tags) {
   return tags.some((tag) => COMING_SOON_TAGS.includes(tag));
 }
