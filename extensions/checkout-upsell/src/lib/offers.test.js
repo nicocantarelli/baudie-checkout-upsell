@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { OFFER_QUERY, mapVariantNode } from './offers.js';
+import { OFFER_QUERY, mapVariantNode, offerVariantIds } from './offers.js';
 
 describe('OFFER_QUERY', () => {
   it('requests the fields the card needs', () => {
@@ -62,5 +62,47 @@ describe('mapVariantNode', () => {
   });
   it('returns null for an empty object (non-variant node shape)', () => {
     expect(mapVariantNode({})).toBe(null);
+  });
+});
+
+describe('offerVariantIds', () => {
+  const shopOffers = (value) => ({
+    target: { type: 'shop', id: 'gid://shopify/Shop/1' },
+    metafield: { namespace: 'baudie', key: 'upsell_offers', value },
+  });
+  const offers = {
+    offers: [
+      { productId: 'gid://shopify/Product/1', variantId: 'gid://shopify/ProductVariant/10' },
+      { productId: 'gid://shopify/Product/2', variantId: 'gid://shopify/ProductVariant/20' },
+    ],
+    dealProductIds: ['gid://shopify/Product/1', 'gid://shopify/Product/2'],
+  };
+
+  it('reads the offered variants, in order, from the shop metafield', () => {
+    expect(offerVariantIds([shopOffers(JSON.stringify(offers))])).toEqual([
+      'gid://shopify/ProductVariant/10',
+      'gid://shopify/ProductVariant/20',
+    ]);
+  });
+
+  it('accepts an already parsed value', () => {
+    expect(offerVariantIds([shopOffers(offers)])).toEqual([
+      'gid://shopify/ProductVariant/10',
+      'gid://shopify/ProductVariant/20',
+    ]);
+  });
+
+  it('ignores product metafields and other keys', () => {
+    const productEntry = {
+      target: { type: 'product', id: 'gid://shopify/Product/1' },
+      metafield: { namespace: 'custom', key: 'upsell_price', value: '8.0' },
+    };
+    expect(offerVariantIds([productEntry])).toEqual([]);
+  });
+
+  it('offers nothing when the metafield is missing, unreadable or empty', () => {
+    expect(offerVariantIds([])).toEqual([]);
+    expect(offerVariantIds([shopOffers('not json')])).toEqual([]);
+    expect(offerVariantIds([shopOffers(JSON.stringify({ offers: [], dealProductIds: [] }))])).toEqual([]);
   });
 });

@@ -8,7 +8,8 @@ Designed and built by Nicolas Cantarelli.
 
 ## How it works
 
-- Fetches the configured offer variants through the **Storefront API from within checkout** (image, availability, price, and the product's `upsell_price` metafield in one query)
+- **Offers come from the admin** — the products to offer are the `baudie.upsell_offers` shop metafield, saved on the Upsell deals page of the [Baudie Gifts & Deals app](https://github.com/nicocantarelli/baudie-discounts) (Apps → Baudie Gifts & Deals → Upsell deals, the *Offer in the cart and checkout* switch on each deal product). The theme's cart drawer reads the same metafield, so both always offer the same products. The checkout editor only holds the block's on/off switch and heading
+- Fetches the offer variants through the **Storefront API from within checkout** (image, availability, price, and the product's `upsell_price` metafield in one query)
 - Renders offer cards with the deal price and the regular price struck through — one-tap add straight into the checkout's cart lines
 - **`custom.upsell_price` metafield contract** — a product carrying this metafield is an "upsell product" and its value is the deal price; a product without it is a *qualifier*. Offers only render when the cart holds at least one qualifier, mirroring the discount function's rule exactly (the two implementations must stay in sync — both codebases say so in comments)
 - **Price-display safety** — the shown price is clamped to the variant price: since the discount only applies when `upsell_price` is *below* the regular price, a misconfigured higher value can never change what the buyer pays, and the clamp guarantees the card never displays a price that won't be honored
@@ -25,7 +26,8 @@ baudie-checkout-upsell/
     ├── src/
     │   ├── Checkout.jsx                 # Extension entry — offer cards UI
     │   └── lib/
-    │       ├── offers.js                # Storefront query + variant mapping
+    │       ├── offers.js                # Offers metafield, Storefront query +
+    │       │                            #   variant mapping
     │       ├── upsell.js                # Metafield contract, qualifier +
     │       │                            #   clamping rules
     │       └── *.test.js                # Unit tests for the above

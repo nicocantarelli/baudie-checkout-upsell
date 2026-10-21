@@ -27,12 +27,18 @@ default_placement = "ORDER_SUMMARY1"
 api_access = true
 
 # Loads metafields on checkout resources. The upsell_price metafield stores
-# the display price for the upsell offer (set externally via Admin API).
+# the display price for the upsell offer, and the shop's upsell_offers
+# metafield lists the products to offer. Both are saved on the Upsell deals
+# page of the Baudie Gifts & Deals app (baudie-discounts).
 # https://shopify.dev/docs/api/checkout-ui-extensions/latest/configuration#metafields
 
 [[extensions.metafields]]
 namespace = "custom"
 key = "upsell_price"
+
+[[extensions.metafields]]
+namespace = "baudie"
+key = "upsell_offers"
 
 # Merchant-configurable settings exposed in the checkout editor.
 # https://shopify.dev/docs/api/checkout-ui-extensions/latest/configuration#settings-definition
@@ -48,13 +54,3 @@ key = "upsell_price"
   key = "heading"
   type = "single_line_text_field"
   name = "Heading"
-
-  [[extensions.settings.fields]]
-  key = "offer_variant_1"
-  type = "variant_reference"
-  name = "Offer 1 variant (default: wipes)"
-
-  [[extensions.settings.fields]]
-  key = "offer_variant_2"
-  type = "variant_reference"
-  name = "Offer 2 variant (optional)"

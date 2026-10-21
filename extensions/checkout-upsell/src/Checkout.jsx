@@ -9,7 +9,7 @@ import {
   UPSELL_NAMESPACE,
   UPSELL_KEY,
 } from "./lib/upsell.js";
-import { OFFER_QUERY, mapVariantNode } from "./lib/offers.js";
+import { OFFER_QUERY, mapVariantNode, offerVariantIds } from "./lib/offers.js";
 
 export default async () => {
   render(<Extension />, document.body);
@@ -37,11 +37,8 @@ function Extension() {
 
   const enabled = settings.enabled !== false;
   const heading = settings.heading;
-  const offerVariantIds = [
-    settings.offer_variant_1,
-    settings.offer_variant_2,
-  ].filter(Boolean);
-  const offerIdsKey = offerVariantIds.join(",");
+  const offerIds = offerVariantIds(appMetafields);
+  const offerIdsKey = offerIds.join(",");
   const shouldFetchOffers = enabled && offerIdsKey !== "";
 
   const [offers, setOffers] = useState([]);
@@ -59,7 +56,7 @@ function Extension() {
     async function fetchOffers() {
       try {
         const { data, errors } = await shopify.query(OFFER_QUERY, {
-          variables: { ids: offerVariantIds },
+          variables: { ids: offerIds },
         });
         if (!active) return;
         if (errors?.length || !Array.isArray(data?.nodes)) {
