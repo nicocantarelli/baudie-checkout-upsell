@@ -101,6 +101,15 @@ describe('computePriceDisplay in other currencies', () => {
     expect(computePriceDisplay({ variantId: WIPES_3, variantPriceCents: 2295, currencyCode: 'EUR', upsellPrice: 19 }, saved))
       .toEqual({ currentCents: 1817, compareAtCents: 2295 });
   });
+  it("follows each variant's own saved price when a product's variants differ in price", () => {
+    // One deal product at US$8 with a US$10 and a US$12 variant (fixture
+    // cart-lines-upsell-deal-variants-at-different-prices.json).
+    const variants = { shopCurrency: 'USD', basePrices: { [WIPES]: '10.00', [WIPES_3]: '12.00' } };
+    expect(computePriceDisplay(wipes(1425, 'CAD'), variants))
+      .toEqual({ currentCents: 1140, compareAtCents: 1425 });
+    expect(computePriceDisplay({ variantId: WIPES_3, variantPriceCents: 1725, currencyCode: 'CAD', upsellPrice: 8 }, variants))
+      .toEqual({ currentCents: 1150, compareAtCents: 1725 });
+  });
   it('shows the regular price when the variant has no saved shop-currency price', () => {
     expect(computePriceDisplay(wipes(1425, 'CAD'), { shopCurrency: 'USD', basePrices: {} }))
       .toEqual({ currentCents: 1425, compareAtCents: null });
