@@ -4,7 +4,9 @@ import {
   isGiftLine,
   isComingSoon,
   computePriceDisplay,
+  dealPricing,
   isOfferEligible,
+  localDealCents,
   parseUpsellPrice,
 } from './upsell.js';
 
@@ -71,6 +73,73 @@ describe('computePriceDisplay', () => {
   it('clamps to variant price when upsell price is misconfigured higher', () => {
     expect(computePriceDisplay({ variantPriceCents: 1900, upsellPrice: 24 }))
       .toEqual({ currentCents: 1900, compareAtCents: null });
+  });
+});
+
+// The same cases as the discount function's fixtures in baudie-discounts
+// (tests/fixtures/cart-lines-upsell-deal-*.json): the card must show exactly
+// what the discount charges.
+describe('computePriceDisplay in other currencies', () => {
+  const WIPES = 'gid://shopify/ProductVariant/20';
+  const WIPES_3 = 'gid://shopify/ProductVariant/30';
+  const saved = { shopCurrency: 'USD', basePrices: { [WIPES]: '10.00', [WIPES_3]: '24.00' } };
+  const wipes = (variantPriceCents, currencyCode) => ({
+    variantId: WIPES,
+    variantPriceCents,
+    currencyCode,
+    upsellPrice: 8,
+  });
+
+  it('keeps the deal share of the market price: US$8 of US$10 is CA$11.40 of CA$14.25', () => {
+    expect(computePriceDisplay(wipes(1425, 'CAD'), saved))
+      .toEqual({ currentCents: 1140, compareAtCents: 1425 });
+  });
+  it('follows a rounded or price-list market price', () => {
+    expect(computePriceDisplay(wipes(995, 'EUR'), saved))
+      .toEqual({ currentCents: 796, compareAtCents: 995 });
+    // €22.95 × 19 / 24 = €18.16875 → €18.17
+    expect(computePriceDisplay({ variantId: WIPES_3, variantPriceCents: 2295, currencyCode: 'EUR', upsellPrice: 19 }, saved))
+      .toEqual({ currentCents: 1817, compareAtCents: 2295 });
+  });
+  it('shows the regular price when the variant has no saved shop-currency price', () => {
+    expect(computePriceDisplay(wipes(1425, 'CAD'), { shopCurrency: 'USD', basePrices: {} }))
+      .toEqual({ currentCents: 1425, compareAtCents: null });
+  });
+  it('shows the regular price when the deal price is not below the saved price', () => {
+    expect(computePriceDisplay(wipes(1425, 'CAD'), { shopCurrency: 'USD', basePrices: { [WIPES]: '8.00' } }))
+      .toEqual({ currentCents: 1425, compareAtCents: null });
+  });
+  it('in the shop currency, shows the deal price as saved, exactly as before', () => {
+    expect(computePriceDisplay(wipes(900, 'USD'), saved))
+      .toEqual({ currentCents: 800, compareAtCents: 900 });
+    expect(computePriceDisplay(wipes(900, 'USD'), saved))
+      .toEqual(computePriceDisplay(wipes(900, 'USD')));
+  });
+  it('before the prices are saved, every currency shows the deal price as saved', () => {
+    expect(computePriceDisplay(wipes(1425, 'CAD'), dealPricing({ offers: [], dealProductIds: [] })))
+      .toEqual({ currentCents: 800, compareAtCents: 1425 });
+  });
+});
+
+describe('dealPricing', () => {
+  it('reads the shop currency and saved prices', () => {
+    expect(dealPricing({ shopCurrency: 'USD', basePrices: { a: '10.00' } }))
+      .toEqual({ shopCurrency: 'USD', basePrices: { a: '10.00' } });
+  });
+  it('is "not saved" for a missing or older value', () => {
+    expect(dealPricing(null)).toEqual({ shopCurrency: null, basePrices: {} });
+    expect(dealPricing({ offers: [] })).toEqual({ shopCurrency: null, basePrices: {} });
+  });
+});
+
+describe('localDealCents', () => {
+  it('rounds to the nearest cent', () => {
+    expect(localDealCents(2295, 19, '24.00')).toBe(1817);
+  });
+  it('is null without a usable saved price', () => {
+    expect(localDealCents(1425, 8, undefined)).toBe(null);
+    expect(localDealCents(1425, 8, '0')).toBe(null);
+    expect(localDealCents(1425, 10, '10.00')).toBe(null);
   });
 });
 

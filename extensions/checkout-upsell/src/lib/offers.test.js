@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { OFFER_QUERY, mapVariantNode, offerVariantIds } from './offers.js';
+import { OFFER_QUERY, mapVariantNode, offerVariantIds, offersDealPricing } from './offers.js';
 
 describe('OFFER_QUERY', () => {
   it('requests the fields the card needs', () => {
@@ -104,5 +104,32 @@ describe('offerVariantIds', () => {
     expect(offerVariantIds([])).toEqual([]);
     expect(offerVariantIds([shopOffers('not json')])).toEqual([]);
     expect(offerVariantIds([shopOffers(JSON.stringify({ offers: [], dealProductIds: [] }))])).toEqual([]);
+  });
+});
+
+describe('offersDealPricing', () => {
+  const shopOffers = (value) => ({
+    target: { type: 'shop', id: 'gid://shopify/Shop/1' },
+    metafield: { namespace: 'baudie', key: 'upsell_offers', value },
+  });
+
+  it('reads the deal pricing saved with the offers', () => {
+    const value = {
+      offers: [],
+      dealProductIds: [],
+      shopCurrency: 'USD',
+      basePrices: { 'gid://shopify/ProductVariant/20': '10.00' },
+    };
+    expect(offersDealPricing([shopOffers(JSON.stringify(value))])).toEqual({
+      shopCurrency: 'USD',
+      basePrices: { 'gid://shopify/ProductVariant/20': '10.00' },
+    });
+  });
+
+  it('is "not saved" when the metafield is missing, unreadable or has no prices yet', () => {
+    const notSaved = { shopCurrency: null, basePrices: {} };
+    expect(offersDealPricing([])).toEqual(notSaved);
+    expect(offersDealPricing([shopOffers('not json')])).toEqual(notSaved);
+    expect(offersDealPricing([shopOffers(JSON.stringify({ offers: [], dealProductIds: [] }))])).toEqual(notSaved);
   });
 });

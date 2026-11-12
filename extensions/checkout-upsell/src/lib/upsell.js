@@ -31,18 +31,66 @@ export function isComingSoon(tags) {
   return tags.some((tag) => COMING_SOON_TAGS.includes(tag));
 }
 
-// Mirrors snippets/sidecart-upsell-item.liquid: upsell_price (dollars) is the
-// shown price; the regular variant price is struck through only when higher.
-// Clamps currentCents to variantPriceCents: the discount only applies when
-// upsell_price < variant price, so a misconfigured higher value would never
-// reduce the charge — capping ensures the display matches what the buyer pays.
-export function computePriceDisplay({ variantPriceCents, upsellPrice }) {
-  if (upsellPrice == null) {
-    return { currentCents: variantPriceCents, compareAtCents: null };
+// The deal price in the customer's currency. upsell_price is in the shop's
+// currency (USD); Shopify only localizes real variant prices (market price
+// lists, rounding), so in another currency the deal takes the same share off
+// the variant's price in that market:
+//   deal = market price × upsell_price ÷ the variant's shop-currency price
+// with the shop-currency prices saved in the `baudie.upsell_offers` shop
+// metafield (`shopCurrency`, `basePrices`) by the Upsell deals page. Mirrors
+// baudie-discounts (extensions/discount-function/src/upsell_price.js) and the
+// theme's snippets/sidecart-upsell-item.liquid, and MUST stay in sync: all
+// three compute the same cents, so the shown price is exactly the charge.
+
+// Before the Upsell deals page saves the prices (no `shopCurrency`), every
+// currency keeps the deal price as saved, in all three places alike.
+const PRICES_NOT_SAVED = { shopCurrency: null, basePrices: {} };
+
+// The deal pricing from the `baudie.upsell_offers` metafield's (parsed) value.
+export function dealPricing(offersValue) {
+  const shopCurrency = typeof offersValue?.shopCurrency === 'string' ? offersValue.shopCurrency : null;
+  const basePrices =
+    offersValue?.basePrices && typeof offersValue.basePrices === 'object' ? offersValue.basePrices : {};
+  return { shopCurrency, basePrices };
+}
+
+function toCents(amount) {
+  return Math.round(parseFloat(amount) * 100);
+}
+
+// The deal price in another currency, in cents, or null when the deal doesn't
+// apply: no saved shop-currency price for the variant, or a deal price that
+// isn't below it.
+export function localDealCents(unitCents, dealPrice, basePrice) {
+  if (basePrice == null) return null;
+  const dealCents = toCents(dealPrice);
+  const baseCents = toCents(basePrice);
+  if (!(baseCents > 0) || !(dealCents > 0) || !(dealCents < baseCents)) return null;
+  return Math.round((unitCents * dealCents) / baseCents);
+}
+
+// upsell_price is the shown price; the regular variant price is struck
+// through only when higher. In the shop's currency, currentCents is clamped to
+// variantPriceCents: the discount only applies when upsell_price < variant
+// price, so a misconfigured higher value would never reduce the charge, and
+// capping ensures the display matches what the buyer pays. In another
+// currency, a deal that doesn't apply shows the regular price, as charged.
+export function computePriceDisplay(
+  { variantId, variantPriceCents, currencyCode, upsellPrice },
+  pricing = PRICES_NOT_SAVED,
+) {
+  const regular = { currentCents: variantPriceCents, compareAtCents: null };
+  if (upsellPrice == null) return regular;
+
+  if (pricing.shopCurrency === null || currencyCode === pricing.shopCurrency) {
+    const currentCents = Math.min(Math.round(upsellPrice * 100), variantPriceCents);
+    const compareAtCents = currentCents < variantPriceCents ? variantPriceCents : null;
+    return { currentCents, compareAtCents };
   }
-  const currentCents = Math.min(Math.round(upsellPrice * 100), variantPriceCents);
-  const compareAtCents = currentCents < variantPriceCents ? variantPriceCents : null;
-  return { currentCents, compareAtCents };
+
+  const dealCents = localDealCents(variantPriceCents, upsellPrice, pricing.basePrices[variantId]);
+  if (dealCents === null || !(dealCents < variantPriceCents)) return regular;
+  return { currentCents: dealCents, compareAtCents: variantPriceCents };
 }
 
 export function isOfferEligible(offer, cartProductIds) {

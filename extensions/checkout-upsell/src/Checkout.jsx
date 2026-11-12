@@ -10,7 +10,12 @@ import {
   UPSELL_NAMESPACE,
   UPSELL_KEY,
 } from "./lib/upsell.js";
-import { OFFER_QUERY, mapVariantNode, offerVariantIds } from "./lib/offers.js";
+import {
+  OFFER_QUERY,
+  mapVariantNode,
+  offerVariantIds,
+  offersDealPricing,
+} from "./lib/offers.js";
 
 export default async () => {
   render(<Extension />, document.body);
@@ -35,6 +40,7 @@ function Extension() {
   const settings = shopify.settings.value;
   const lines = shopify.lines.value;
   const appMetafields = shopify.appMetafields.value;
+  const checkoutCurrency = shopify.localization.currency.value?.isoCode;
 
   const enabled = settings.enabled !== false;
   const heading = settings.heading;
@@ -93,10 +99,16 @@ function Extension() {
   if (!hasQualifier(cartProducts)) return null;
 
   const cartProductIds = cartProducts.map((product) => product.productId);
-  const eligibleOffers = offers.filter((offer) =>
-    isOfferEligible(offer, cartProductIds),
+  // The Storefront API prices offers in the buyer's market. A price in any
+  // currency other than the checkout's can't be what the buyer is charged, so
+  // such an offer isn't shown.
+  const eligibleOffers = offers.filter(
+    (offer) =>
+      offer.currencyCode === checkoutCurrency &&
+      isOfferEligible(offer, cartProductIds),
   );
   if (eligibleOffers.length === 0) return null;
+  const pricing = offersDealPricing(appMetafields);
 
   async function addOffer(offer) {
     setAddFailed(false);
@@ -127,6 +139,7 @@ function Extension() {
         <OfferCard
           key={offer.variantId}
           offer={offer}
+          price={computePriceDisplay(offer, pricing)}
           loading={pendingVariantId === offer.variantId}
           disabled={
             pendingVariantId != null && pendingVariantId !== offer.variantId
@@ -138,8 +151,8 @@ function Extension() {
   );
 }
 
-function OfferCard({ offer, loading, disabled, onAdd }) {
-  const { currentCents, compareAtCents } = computePriceDisplay(offer);
+function OfferCard({ offer, price, loading, disabled, onAdd }) {
+  const { currentCents, compareAtCents } = price;
   const columns = offer.imageUrl ? "6rem 1fr auto" : "1fr auto";
 
   return (

@@ -1,15 +1,17 @@
-import { isComingSoon, parseUpsellPrice, UPSELL_NAMESPACE, UPSELL_KEY } from './upsell.js';
+import { dealPricing, isComingSoon, parseUpsellPrice, UPSELL_NAMESPACE, UPSELL_KEY } from './upsell.js';
 
 // The products to offer: the `baudie.upsell_offers` shop metafield (JSON),
 // saved on the Upsell deals page of the Baudie Gifts & Deals app
 // (baudie-discounts). The theme's cart drawer reads the same metafield, so the
-// drawer and checkout always offer the same products.
+// drawer and checkout always offer the same products. It also holds the deal
+// pricing for other currencies (`shopCurrency`, `basePrices`), which the
+// discount function reads too.
 export const OFFERS_NAMESPACE = 'baudie';
 export const OFFERS_KEY = 'upsell_offers';
 
-// The variant ids to offer, in order, from the shop metafield in
-// appMetafields. Empty when it's missing or unreadable.
-export function offerVariantIds(appMetafields) {
+// The shop metafield's parsed value from appMetafields, or null when it's
+// missing or unreadable.
+function upsellOffersValue(appMetafields) {
   const entry = appMetafields.find(
     (candidate) =>
       candidate.target.type === 'shop' &&
@@ -21,11 +23,23 @@ export function offerVariantIds(appMetafields) {
     try {
       value = JSON.parse(value);
     } catch {
-      return [];
+      return null;
     }
   }
+  return value && typeof value === 'object' ? value : null;
+}
+
+// The variant ids to offer, in order, from the shop metafield in
+// appMetafields. Empty when it's missing or unreadable.
+export function offerVariantIds(appMetafields) {
+  const value = upsellOffersValue(appMetafields);
   if (!value || !Array.isArray(value.offers)) return [];
   return value.offers.map((offer) => offer?.variantId).filter(Boolean);
+}
+
+// The deal pricing saved with the offers (see dealPricing in ./upsell.js).
+export function offersDealPricing(appMetafields) {
+  return dealPricing(upsellOffersValue(appMetafields));
 }
 
 // Storefront API query: fetch offer variants by id with the fields the card needs.
