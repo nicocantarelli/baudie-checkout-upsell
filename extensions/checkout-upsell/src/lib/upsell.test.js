@@ -110,6 +110,13 @@ describe('computePriceDisplay in other currencies', () => {
     expect(computePriceDisplay({ variantId: WIPES_3, variantPriceCents: 1725, currencyCode: 'CAD', upsellPrice: 8 }, variants))
       .toEqual({ currentCents: 1150, compareAtCents: 1725 });
   });
+  it('shows whole yen, as charged: ¥3,900 × 19 / 24 = ¥3,087.50 shows ¥3,088', () => {
+    // Fixture cart-lines-upsell-deal-whole-yen.json: ¥812 off ¥3,900, ¥317 off ¥1,583.
+    expect(computePriceDisplay({ variantId: WIPES_3, variantPriceCents: 390000, currencyCode: 'JPY', upsellPrice: 19 }, saved))
+      .toEqual({ currentCents: 308800, compareAtCents: 390000 });
+    expect(computePriceDisplay(wipes(158300, 'JPY'), saved))
+      .toEqual({ currentCents: 126600, compareAtCents: 158300 });
+  });
   it('shows the regular price when the variant has no saved shop-currency price', () => {
     expect(computePriceDisplay(wipes(1425, 'CAD'), { shopCurrency: 'USD', basePrices: {} }))
       .toEqual({ currentCents: 1425, compareAtCents: null });
@@ -143,7 +150,12 @@ describe('dealPricing', () => {
 
 describe('localDealCents', () => {
   it('rounds to the nearest cent', () => {
-    expect(localDealCents(2295, 19, '24.00')).toBe(1817);
+    expect(localDealCents(2295, 19, '24.00', 'EUR')).toBe(1817);
+  });
+  it('rounds to the nearest whole unit in a currency without cents, halves up', () => {
+    expect(localDealCents(390000, 19, '24.00', 'JPY')).toBe(308800); // ¥3,087.50
+    expect(localDealCents(400000, 19, '24.00', 'JPY')).toBe(316700); // ¥3,166.67
+    expect(localDealCents(158300, 8, '10.00', 'KRW')).toBe(126600); // ₩1,266.40
   });
   it('is null without a usable saved price', () => {
     expect(localDealCents(1425, 8, undefined)).toBe(null);

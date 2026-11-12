@@ -58,15 +58,35 @@ function toCents(amount) {
   return Math.round(parseFloat(amount) * 100);
 }
 
+// Currencies priced in whole units, with no cents: ISO 4217's zero-decimal
+// currencies plus the ones browsers format without decimals. Shopify charges
+// these in whole units (a ¥812.50 discount becomes ¥813) and checkout shows
+// them rounded, so a deal with a fraction of a unit would show one price and
+// charge another. Rounding to a whole unit in a currency that does have cents
+// is still exact everywhere, so the list errs on the side of including one.
+// The same list as baudie-discounts and the theme's cart drawer.
+export const WHOLE_UNIT_CURRENCIES = [
+  'AFN', 'ALL', 'BIF', 'CLP', 'COP', 'DJF', 'GNF', 'HUF', 'IDR', 'IQD', 'IRR',
+  'ISK', 'JPY', 'KMF', 'KPW', 'KRW', 'LAK', 'LBP', 'MGA', 'MMK', 'PYG', 'RWF',
+  'SLL', 'SOS', 'SYP', 'UGX', 'UYI', 'VND', 'VUV', 'XAF', 'XOF', 'XPF', 'YER',
+];
+
+// An amount in cents rounded to what the currency can charge: the nearest
+// cent, or the nearest whole unit (a multiple of 100 cents) in a currency
+// without cents. Halves round up.
+export function roundToCurrency(cents, currencyCode) {
+  return WHOLE_UNIT_CURRENCIES.includes(currencyCode) ? Math.round(cents / 100) * 100 : Math.round(cents);
+}
+
 // The deal price in another currency, in cents, or null when the deal doesn't
 // apply: no saved shop-currency price for the variant, or a deal price that
 // isn't below it.
-export function localDealCents(unitCents, dealPrice, basePrice) {
+export function localDealCents(unitCents, dealPrice, basePrice, currencyCode) {
   if (basePrice == null) return null;
   const dealCents = toCents(dealPrice);
   const baseCents = toCents(basePrice);
   if (!(baseCents > 0) || !(dealCents > 0) || !(dealCents < baseCents)) return null;
-  return Math.round((unitCents * dealCents) / baseCents);
+  return roundToCurrency((unitCents * dealCents) / baseCents, currencyCode);
 }
 
 // upsell_price is the shown price; the regular variant price is struck
@@ -88,7 +108,7 @@ export function computePriceDisplay(
     return { currentCents, compareAtCents };
   }
 
-  const dealCents = localDealCents(variantPriceCents, upsellPrice, pricing.basePrices[variantId]);
+  const dealCents = localDealCents(variantPriceCents, upsellPrice, pricing.basePrices[variantId], currencyCode);
   if (dealCents === null || !(dealCents < variantPriceCents)) return regular;
   return { currentCents: dealCents, compareAtCents: variantPriceCents };
 }
