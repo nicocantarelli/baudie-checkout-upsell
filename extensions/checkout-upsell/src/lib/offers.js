@@ -42,9 +42,11 @@ export function offersDealPricing(appMetafields) {
   return dealPricing(upsellOffersValue(appMetafields));
 }
 
-// Storefront API query: fetch offer variants by id with the fields the card needs.
+// Storefront API query: fetch offer variants by id with the fields the card
+// needs, priced for the checkout's country. Without @inContext the Storefront
+// API answers in the shop's default market (USD prices), not the buyer's.
 export const OFFER_QUERY = `
-  query OfferVariants($ids: [ID!]!) {
+  query OfferVariants($ids: [ID!]!, $country: CountryCode) @inContext(country: $country) {
     nodes(ids: $ids) {
       ... on ProductVariant {
         id
@@ -61,6 +63,12 @@ export const OFFER_QUERY = `
     }
   }
 `;
+
+// Variables for OFFER_QUERY. The country is left out when checkout doesn't
+// know it yet, and the query then answers in the shop's default market.
+export function offerQueryVariables(ids, countryCode) {
+  return countryCode ? { ids, country: countryCode } : { ids };
+}
 
 function toCents(amount) {
   return Math.round(parseFloat(amount) * 100);

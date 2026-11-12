@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { OFFER_QUERY, mapVariantNode, offerVariantIds, offersDealPricing } from './offers.js';
+import {
+  OFFER_QUERY,
+  mapVariantNode,
+  offerQueryVariables,
+  offerVariantIds,
+  offersDealPricing,
+} from './offers.js';
 
 describe('OFFER_QUERY', () => {
   it('requests the fields the card needs', () => {
@@ -8,6 +14,21 @@ describe('OFFER_QUERY', () => {
     expect(OFFER_QUERY).toContain('image { url(transform: { maxWidth: 192, maxHeight: 192 }) }');
     expect(OFFER_QUERY).toContain('tags');
     expect(OFFER_QUERY).toContain('metafield(namespace: "custom", key: "upsell_price")');
+  });
+  it("prices the variants in the checkout country's market", () => {
+    expect(OFFER_QUERY).toContain('$country: CountryCode');
+    expect(OFFER_QUERY).toContain('@inContext(country: $country)');
+  });
+});
+
+describe('offerQueryVariables', () => {
+  const ids = ['gid://shopify/ProductVariant/1'];
+  it("passes the checkout's country", () => {
+    expect(offerQueryVariables(ids, 'CA')).toEqual({ ids, country: 'CA' });
+  });
+  it('leaves the country out while checkout does not know it', () => {
+    expect(offerQueryVariables(ids, undefined)).toEqual({ ids });
+    expect(offerQueryVariables(ids, null)).toEqual({ ids });
   });
 });
 

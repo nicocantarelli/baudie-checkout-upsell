@@ -13,6 +13,7 @@ import {
 import {
   OFFER_QUERY,
   mapVariantNode,
+  offerQueryVariables,
   offerVariantIds,
   offersDealPricing,
 } from "./lib/offers.js";
@@ -41,6 +42,7 @@ function Extension() {
   const lines = shopify.lines.value;
   const appMetafields = shopify.appMetafields.value;
   const checkoutCurrency = shopify.localization.currency.value?.isoCode;
+  const checkoutCountry = shopify.localization.country.value?.isoCode;
 
   const enabled = settings.enabled !== false;
   const heading = settings.heading;
@@ -52,6 +54,9 @@ function Extension() {
   const [pendingVariantId, setPendingVariantId] = useState(null);
   const [addFailed, setAddFailed] = useState(false);
 
+  // Offers are priced for the checkout's country, so they're fetched again
+  // when it changes: a new shipping country can move checkout to another
+  // market, with other prices and another currency.
   useEffect(() => {
     if (!shouldFetchOffers) {
       setOffers([]);
@@ -63,7 +68,7 @@ function Extension() {
     async function fetchOffers() {
       try {
         const { data, errors } = await shopify.query(OFFER_QUERY, {
-          variables: { ids: offerIds },
+          variables: offerQueryVariables(offerIds, checkoutCountry),
         });
         if (!active) return;
         if (errors?.length || !Array.isArray(data?.nodes)) {
@@ -80,7 +85,7 @@ function Extension() {
     return () => {
       active = false;
     };
-  }, [shouldFetchOffers, offerIdsKey]);
+  }, [shouldFetchOffers, offerIdsKey, checkoutCountry]);
 
   if (!enabled) return null;
 
